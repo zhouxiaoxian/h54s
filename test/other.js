@@ -150,5 +150,118 @@ describe('h54s', function() {
       });
     });
 
+    it('Table with undefined/null values', function(done) {
+      this.timeout(10000);
+      var sasAdapter = new h54s({
+        hostUrl: serverData.url
+      });
+
+      var table = new h54s.Tables([
+        {appName:"TestBapApp", falsyVal: undefined},
+        {appName:"Dummy Name",falsyVal:null}
+      ], 'data');
+
+      sasAdapter.call('/AJAX/h54s_test/BounceData', table, function(err, res) {
+        assert.isUndefined(err, 'We got error on sas program ajax call');
+        assert.isDefined(res, 'Response is undefined');
+        done();
+      });
+
+    });
+
+    it('Exceptions in tables', function(done) {
+      proclaim.throws(function() {
+        new h54s.Tables([
+          {a: "Dummy Name", specialNumberVal :NaN}
+        ], 'data');
+      }, 'NaN value in one of the values (columns) is not allowed');
+
+      proclaim.throws(function() {
+        new h54s.Tables([
+          {b: "Dummy Name", specialNumberVal: Infinity}
+        ], 'data');
+      }, 'Infinity value in one of the values (columns) is not allowed');
+
+      proclaim.throws(function() {
+        new h54s.Tables([
+          {c: "Dummy Name", specialNumberVal: -Infinity}
+        ], 'data');
+      }, '-Infinity value in one of the values (columns) is not allowed');
+
+      proclaim.throws(function() {
+        new h54s.Tables([
+          {d: "Dummy Name", boolVal: true}
+        ], 'data');
+      }, 'Boolean value in one of the values (columns) is not allowed');
+
+      proclaim.throws(function() {
+        new h54s.Tables([
+          {e: "Dummy Name", boolVal: false}
+        ], 'data');
+      }, 'Boolean value in one of the values (columns) is not allowed');
+
+      done();
+    });
+
+    it('Table with json values', function(done) {
+      this.timeout(10000);
+      var sasAdapter = new h54s({
+        hostUrl: serverData.url
+      });
+
+      var table = new h54s.Tables([
+        {a: "n", objectVal1: {a: 'asd'}},
+        {b: "nn", objectVal2: [1, 2, 3]},
+        {c: "nnn", objectVal3: ['one', 'two', 'three']},
+      ], 'data');
+
+      sasAdapter.call('/AJAX/h54s_test/BounceData', table, function(err, res) {
+        assert.isUndefined(err, 'We got error on sas program ajax call');
+        assert.isDefined(res, 'Response is undefined');
+        done();
+      });
+
+    });
+
+    it('Table with falsy/emty values', function(done) {
+      this.timeout(10000);
+      var sasAdapter = new h54s({
+        hostUrl: serverData.url
+      });
+
+      var table = new h54s.Tables([
+        {a: "nn", objectVal: []},
+        {b: "nnn", emptyStr: ""},
+        {c: "nnnn", falsyNumberVal: 0}
+      ], 'data');
+
+      sasAdapter.call('/AJAX/h54s_test/BounceData', table, function(err, res) {
+        assert.isUndefined(err, 'We got error on sas program ajax call');
+        assert.isDefined(res, 'Response is undefined');
+        done();
+      });
+    });
+
+    it('Table with data added latter', function(done) {
+      this.timeout(10000);
+      var sasAdapter = new h54s({
+        hostUrl: serverData.url
+      });
+
+      var table = new h54s.Tables([
+        {a: "n", emptyStr: ""}
+      ], 'data');
+
+      table.add([
+        {b: "nn", falsyNumberVal: 0}
+      ], 'dataOne');
+
+      sasAdapter.call('/AJAX/h54s_test/BounceData', table, function(err, res) {
+        assert.isUndefined(err, 'We got error on sas program ajax call');
+        assert.isDefined(res, 'Response is undefined');
+        done();
+      });
+    });
+
   });
 });
