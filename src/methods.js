@@ -123,8 +123,19 @@ h54s.prototype.call = function(sasProgram, tablesObj, callback, params) {
       }
     }
   }).error(function(res) {
-    self._utils.addApplicationLogs('Request failed with status: ' + res.status, sasProgram);
-    callback(new h54s.Error('httpError', res.statusText));
+    if(this.isNodeBroker && res.status === 401) {
+      self._disableCalls = true;
+      self._pendingCalls.push({
+        sasProgram: sasProgram,
+        callback:   callback,
+        params:     params
+      });
+
+      callback(new h54s.Error('notLoggedinError', 'You are not logged in'));
+    } else {
+      self._utils.addApplicationLogs('Request failed with status: ' + res.status, sasProgram);
+      callback(new h54s.Error('httpError', res.statusText));
+    }
   });
 };
 
@@ -189,9 +200,15 @@ h54s.prototype.login = function(user, pass, callback) {
       }
     }
   }).error(function(res) {
-    //NOTE: error 502 if sasApp parameter is wrong
-    self._utils.addApplicationLogs('Login failed with status code: ' + res.status);
-    callCallback(res.status);
+    if(this.isNodeBroker && res.status === 400) {
+      self._utils.addApplicationLogs('Wrong username or password');
+      callCallback(-1);
+    } else {
+      //NOTE: error 502 if sasApp parameter is wrong
+      self._utils.addApplicationLogs('Login failed with status code: ' + res.status);
+      callCallback(res.status);
+    }
+
   });
 };
 

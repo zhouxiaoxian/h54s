@@ -11,7 +11,7 @@ h54s.prototype._utils.ajax = (function () {
   var timeoutHandle;
 
   var xhr = function(type, url, data) {
-    var methods = {
+    var self = {
       success: function() {},
       error:   function() {}
     };
@@ -22,11 +22,13 @@ h54s.prototype._utils.ajax = (function () {
     request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     request.onreadystatechange = function () {
       if (request.readyState === 4) {
+        self.isNodeBroker = h54s.prototype._utils.isNodeBroker = request.getResponseHeader('x-powered-by') === 'SAS-Node-Broker';
+
         clearTimeout(timeoutHandle);
         if (request.status >= 200 && request.status < 300) {
-          methods.success.call(methods, request);
+          self.success.call(self, request);
         } else {
-          methods.error.call(methods, request);
+          self.error.call(self, request);
         }
       }
     };
@@ -39,11 +41,11 @@ h54s.prototype._utils.ajax = (function () {
 
     return {
       success: function (callback) {
-        methods.success = callback;
+        self.success = callback;
         return this;
       },
       error: function (callback) {
-        methods.error = callback;
+        self.error = callback;
         return this;
       }
     };
@@ -223,20 +225,32 @@ h54s.prototype._utils.parseDebugRes = function(responseText, sasProgram, params)
   var matches       = responseText.match(patt);
 
   var page          = responseText.replace(patt, '');
-  var htmlBodyPatt  = /<body.*>([\s\S]*)<\/body>/;
-  var bodyMatches   = page.match(htmlBodyPatt);
 
-  //remove html tags
-  var debugText = bodyMatches[1].replace(/<[^>]*>/g, '');
-  debugText     = this.decodeHTMLEntities(debugText);
+  if(!this.isNodeBroker) {
+    var htmlBodyPatt  = /<body.*>([\s\S]*)<\/body>/;
+    var bodyMatches   = page.match(htmlBodyPatt);
 
-  this._debugData.push({
-    debugHtml:  bodyMatches[1],
-    debugText:  debugText,
-    sasProgram: sasProgram,
-    params:     params,
-    time:       new Date()
-  });
+    //remove html tags
+    var debugText = bodyMatches[1].replace(/<[^>]*>/g, '');
+    debugText = this.decodeHTMLEntities(debugText);
+
+    this._debugData.push({
+      debugHtml:  bodyMatches[1],
+      debugText:  debugText,
+      sasProgram: sasProgram,
+      params:     params,
+      time:       new Date()
+    });
+  } else {
+    this._debugData.push({
+      debugText:  page,
+      sasProgram: sasProgram,
+      params:     params,
+      time:       new Date()
+    });
+  }
+
+
 
   //max 20 debug objects
   if(this._debugData.length > 20) {
