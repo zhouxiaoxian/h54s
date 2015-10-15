@@ -225,13 +225,14 @@ h54s.prototype._utils.parseDebugRes = function(responseText, sasProgram, params)
   var matches       = responseText.match(patt);
 
   var page          = responseText.replace(patt, '');
+  var debugText;
 
   if(!this.isNodeBroker) {
     var htmlBodyPatt  = /<body.*>([\s\S]*)<\/body>/;
     var bodyMatches   = page.match(htmlBodyPatt);
 
     //remove html tags
-    var debugText = bodyMatches[1].replace(/<[^>]*>/g, '');
+    debugText = bodyMatches[1].replace(/<[^>]*>/g, '');
     debugText = this.decodeHTMLEntities(debugText);
 
     this._debugData.push({
@@ -248,6 +249,7 @@ h54s.prototype._utils.parseDebugRes = function(responseText, sasProgram, params)
       params:     params,
       time:       new Date()
     });
+    debugText = page;
   }
 
 
