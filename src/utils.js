@@ -344,6 +344,9 @@ h54s.prototype._utils.parseErrorResponse = function(res, sasProgram) {
   while(this._sasErrors.length > 100) {
     this._sasErrors.shift();
   }
+
+  //return true if the response has errors
+  return errors.length > 0;
 };
 
 /*

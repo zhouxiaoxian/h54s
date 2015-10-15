@@ -108,8 +108,12 @@ h54s.prototype.call = function(sasProgram, tablesObj, callback, params) {
           resObj          = self._utils.convertDates(resObj);
           unescapedResObj = self._utils.unescapeValues(resObj);
         } catch(e) {
-          self._utils.parseErrorResponse(res.responseText, sasProgram);
-          callback(new h54s.Error('parseError', e.message));
+          var hasErrors = self._utils.parseErrorResponse(res.responseText, sasProgram);
+          if(hasErrors) {
+            callback(new h54s.Error('sasError', 'Sas program completed with errors'), unescapedResObj);
+          } else {
+            callback(new h54s.Error('parseError', e.message));
+          }
         } finally {
           if(unescapedResObj) {
             self._utils.addApplicationLogs(resObj.logmessage);

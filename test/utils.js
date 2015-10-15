@@ -197,7 +197,6 @@ describe('h54s', function() {
                 assert.notOk(debugData, 'sasErrors array should not be empty');
               } else {
                 for(i = 0; i < debugData.length; i++) {
-                  assert.isString(debugData[i].debugHtml, 'debugHtml should be string');
                   assert.isString(debugData[i].debugText, 'debugText should be string');
                   assert.isString(debugData[i].sasProgram, 'sasProgram should be string');
                   assert.isObject(debugData[i].params, 'params should be array');
