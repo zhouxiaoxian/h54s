@@ -22,7 +22,7 @@ h54s.prototype._utils.ajax = (function () {
     request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     request.onreadystatechange = function () {
       if (request.readyState === 4) {
-        self.isNodeBroker = h54s.prototype._utils.isNodeBroker = request.getResponseHeader('x-powered-by') === 'SAS-Node-Broker';
+        self.isNodeBroker = h54s.prototype._utils.isNodeBroker = request.getResponseHeader('x-powered-by') === 'SAS-Broker';
 
         clearTimeout(timeoutHandle);
         if (request.status >= 200 && request.status < 300) {
