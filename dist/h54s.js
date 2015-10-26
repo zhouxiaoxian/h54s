@@ -1,4 +1,4 @@
-/*! h54s v0.6.0 - 2015-09-08 
+/*! h54s v0.6.3 - 2015-10-09 
  *  License: GPL 
  *  Author: Boemska 
 */
@@ -76,6 +76,8 @@ var h54s = function(config) {
   this.sasApp           = 'Stored Process Web App 9.3';
   this.ajaxTimeout      = 30000;
 
+  this.remoteConfigUpdateCallbacks = [];
+
   this._pendingCalls    = [];
 
   if(config && config.isRemoteConfig) {
@@ -96,13 +98,24 @@ var h54s = function(config) {
 
       _setConfig.call(self, config);
 
-      //execute calls disabled while waiting for the config
+      //execute callbacks when we have remote config
+      //note that remote conifg is merged with instance config
+      for(var i = 0, n = self.remoteConfigUpdateCallbacks.length; i < n; i++) {
+        var fn = self.remoteConfigUpdateCallbacks[i];
+        fn();
+      }
+
+      //execute sas calls disabled while waiting for the config
       self._disableCalls = false;
       while(self._pendingCalls.length > 0) {
         var pendingCall = self._pendingCalls.shift();
         var sasProgram  = pendingCall.sasProgram;
         var callback    = pendingCall.callback;
         var params      = pendingCall.params;
+
+        //update debug because it may change in the meantime
+        params._debug = self.debug ? 131 : 0;
+
         self.call(sasProgram, null, callback, params);
       }
     }).error(function (err) {
@@ -111,6 +124,16 @@ var h54s = function(config) {
   } else {
     _setConfig.call(this, config);
   }
+};
+
+/*
+* Add callback functions executed when properties are updated with remote config
+*
+*@callback - callback pushed to array
+*
+*/
+h54s.prototype.onRemoteConfigUpdate = function(callback) {
+  this.remoteConfigUpdateCallbacks.push(callback);
 };
 
 /*
@@ -145,6 +168,12 @@ h54s.Tables = function(table, macroName) {
   this.add(table, macroName);
 };
 
+/*
+* private function to set h54s instance properties
+*
+*@param {object} config - adapter config object, with keys like url, debug, etc.
+*
+*/
 function _setConfig(config) {
   if(!config) {
     return;
@@ -202,7 +231,7 @@ h54s.prototype.call = function(sasProgram, tablesObj, callback, params) {
 
   if(!params) {
     params = {
-      _program: sasProgram,
+      _program: this.metadataRoot ? this.metadataRoot.replace(/\/?$/, '/') + sasProgram.replace(/^\//, '') : sasProgram,
       _debug:   this.debug ? 131 : 0,
       _service: 'default',
     };
@@ -357,6 +386,10 @@ h54s.prototype.login = function(user, pass, callback) {
         var sasProgram  = pendingCall.sasProgram;
         var callback    = pendingCall.callback;
         var params      = pendingCall.params;
+
+        //update debug because it may change in the meantime
+        params._debug = self.debug ? 131 : 0;
+
         if(self.retryAfterLogin) {
           self.call(sasProgram, null, callback, params);
         }
@@ -473,6 +506,9 @@ h54s.Tables.prototype.add = function(table, macroName) {
     }
     if(typeof macroName !== 'string') {
       throw new h54s.Error('argumentError', 'Second argument must be string');
+    }
+    if(!isNaN(macroName[macroName.length - 1])) {
+      throw new h54s.Error('argumentError', 'Macro name cannot have number at the end');
     }
   } else {
     throw new h54s.Error('argumentError', 'Missing arguments');
