@@ -68,13 +68,6 @@ module.exports.call = function(sasProgram, tablesObj, callback, params) {
         self._disableCalls = true;
       }
 
-      try {
-        var sasAppMatches = res.responseURL.match(/_sasapp=([^&]*)/);
-        self.sasApp = sasAppMatches[1].replace(/\+/g, ' ');
-      } catch(e) {
-        logs.addApplicationLog('Cannot extract _sasapp parameter from login URL');
-      }
-
       callback(new h54sError('notLoggedinError', 'You are not logged in'));
     } else {
       var resObj, unescapedResObj;
@@ -165,7 +158,6 @@ module.exports.login = function(user, pass, callback) {
   }
 
   var loginParams = {
-    _sasapp: self.sasApp,
     _service: 'default',
     ux: user,
     px: pass,
